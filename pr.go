@@ -1,6 +1,9 @@
-package pr
+/*
+	A pattern recognition package.
 
-type Feature []float64
+	Gaussian classifier.
+*/
+package pr
 
 /*
 	LabeledFeatureSet represents a set of features collected by labels.
@@ -15,15 +18,15 @@ type LabeledFeatureSet interface {
 	FeatureCount(label int) int
 	// Fetch a feature of specified label, and index. The function fill the
 	// content of feature
-	FetchFeature(label, index int, x Feature)
+	FetchFeature(label, index int, x []float64)
 }
 
 /*
 	A Classifier can classify a feature with trained model.
 */
 type Classifier interface {
-	// Classify classifies the feature and returns the label
-	Classify(feature Feature) int
+	// Classify classifies the feature x and returns the label
+	Classify(x []float64) int
 }
 
 /*

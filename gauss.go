@@ -43,12 +43,12 @@ func (gc *GaussianClassifier) SetPrior(priors []float64) {
 }
 
 // Implementation of Classifier.Classify
-func (gc *GaussianClassifier) Classify(feature Feature) int {
+func (gc *GaussianClassifier) Classify(x []float64) int {
 	bestLogP := 0.
 	bestLabel := -1
 
 	for lbl := range gc.LogCoefs {
-		logP := gc.LogPosterior(lbl, feature)
+		logP := gc.LogPosterior(lbl, x)
 
 		if bestLabel < 0 || logP > bestLogP {
 			bestLabel, bestLogP = lbl, logP
@@ -62,7 +62,7 @@ func (gc *GaussianClassifier) Classify(feature Feature) int {
 	LogLikelyhood returns the logarithm of the likelyhood of the feature x on a
 	specified label.
 */
-func (gc *GaussianClassifier) LogLikelyhood(label int, x Feature) float64 {
+func (gc *GaussianClassifier) LogLikelyhood(label int, x []float64) float64 {
 	logP := gc.LogCoefs[label]
 
 	mean := gc.Means[label]
@@ -70,6 +70,7 @@ func (gc *GaussianClassifier) LogLikelyhood(label int, x Feature) float64 {
 
 	dim := len(mean)
 
+	/* logP += (x -  mu)' * Sigma * (x - mu) */
 	for k := range mean {
 		vk := x[k] - mean[k]
 		for l := range mean {
@@ -85,11 +86,11 @@ func (gc *GaussianClassifier) LogLikelyhood(label int, x Feature) float64 {
 	LogPosterior returns the logarithm of the posterior probability of a feature
 	on a specified label.
 */
-func (gc *GaussianClassifier) LogPosterior(label int, feature Feature) float64 {
+func (gc *GaussianClassifier) LogPosterior(label int, x []float64) float64 {
 	if gc.LogPrior == nil {
-		return gc.LogLikelyhood(label, feature)
+		return gc.LogLikelyhood(label, x)
 	}
-	return gc.LogLikelyhood(label, feature) + gc.LogPrior[label]
+	return gc.LogLikelyhood(label, x) + gc.LogPrior[label]
 }
 
 /*
@@ -101,7 +102,7 @@ type GaussianTrainer struct {
 /*
 	GaussianTrain trains a *GaussianClassifier from a LabeledFeatureSet.
 */
-func GaussianTrain(lfs LabeledFeatureSet) Classifier {
+func GaussianTrain(lfs LabeledFeatureSet) *GaussianClassifier {
 	lblCnt := lfs.LabelCount()
 	dim := lfs.Dim()
 	clsfr := &GaussianClassifier{
@@ -110,7 +111,7 @@ func GaussianTrain(lfs LabeledFeatureSet) Classifier {
 		LogCoefs: make([]float64, lblCnt),
 	}
 
-	x := make(Feature, dim)
+	x := make([]float64, dim)
 
 	sigma := make([]float64, dim*dim)
 	for lbl := range clsfr.Means {
